@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -23,74 +24,93 @@ import com.example.demo.model.OrderDetail;
 @RequestMapping("/brad11")
 public class Brad11 {
 
-	private final OrderDetail orderDetail;
-	@Autowired
-	private NamedParameterJdbcTemplate jdbc;
-
+    private final OrderDetail orderDetail;
+    
+//	@Autowired
+//	private NamedParameterJdbcTemplate jdbc;
+    
+    @Autowired
+    @Qualifier("northJdbcTemplete")
+    private NamedParameterJdbcTemplate jdbc;
+    
+    
+	
 	@Autowired
 	private OrderDetailRowMapper mapper;
 
-	Brad11(OrderDetail orderDetail) {
-		this.orderDetail = orderDetail;
-	}
-
+    Brad11(OrderDetail orderDetail) {
+        this.orderDetail = orderDetail;
+    }
+	
 	/*
-	 * SELECT o.OrderID id, p.ProductName pname, od.Quantity qty, od.UnitPrice price
-	 * FROM orders o JOIN orderdetails od ON o.OrderID = od.OrderID JOIN products p
-	 * ON od.ProductID = p.ProductID WHERE o.OrderID = 10248
+	 * SELECT o.OrderID id, p.ProductName pname, 
+		od.Quantity qty, od.UnitPrice price 
+		FROM orders o
+		JOIN orderdetails od ON o.OrderID = od.OrderID
+		JOIN products p ON od.ProductID = p.ProductID
+		WHERE o.OrderID = 10248
 	 */
 	@GetMapping("/order/{orderId}")
 	public List<OrderDetail> test1(@PathVariable int orderId) {
-		String sql = "SELECT o.OrderID id, p.ProductName pname, " + "		od.Quantity qty, od.UnitPrice price "
-				+ "		FROM orders o" + "		JOIN orderdetails od ON o.OrderID = od.OrderID"
-				+ "		JOIN products p ON od.ProductID = p.ProductID" + "		WHERE o.OrderID = :orderId";
-		Map<String, Object> params = new HashMap<>();
+		String sql = "SELECT o.OrderID id, p.ProductName pname, "
+				+ "		od.Quantity qty, od.UnitPrice price "
+				+ "		FROM orders o"
+				+ "		JOIN orderdetails od ON o.OrderID = od.OrderID"
+				+ "		JOIN products p ON od.ProductID = p.ProductID"
+				+ "		WHERE o.OrderID = :orderId";
+		Map<String,Object> params = new HashMap<>();
 		params.put("orderId", orderId);
-
+		
 		return jdbc.query(sql, params, mapper);
 	}
-
-	@GetMapping(value = { "/orders", "/orders/{orderId}" })
-	public List<Order> test2(@PathVariable(required = false) Integer orderId) {
+	
+	@GetMapping(value = {"/orders", "/orders/{orderId}"})
+	public List<Order> test2(@PathVariable(required = false) Integer orderId){
 		String sql = "SELECT o.OrderID id, o.OrderDate odate, p.ProductName pname, "
-				+ "		od.Quantity qty, od.UnitPrice price " + "		FROM orders o"
+				+ "		od.Quantity qty, od.UnitPrice price "
+				+ "		FROM orders o"
 				+ "		JOIN orderdetails od ON o.OrderID = od.OrderID"
 				+ "		JOIN products p ON od.ProductID = p.ProductID";
-
-		Map<String, Object> params = new HashMap<>();
+		
+		Map<String,Object> params = new HashMap<>();
 		if (orderId != null) {
 			sql += "		WHERE o.OrderID = :orderId";
 			params.put("orderId", orderId);
 		}
-		List<Map<String, Object>> orderMap = jdbc.queryForList(sql, params);
+		List<Map<String,Object>> orderMap = jdbc.queryForList(sql, params);
 
-		// -------------------------
+		//-------------------------
 		// 以陣列為 root, 輸出用的
 		HashMap<Integer, Order> orders = new HashMap<>();
-
-		for (Map<String, Object> row : orderMap) {
-			int oid = (Integer) row.get("id");
-
+		
+		for (Map<String,Object> row: orderMap) {
+			int oid = (Integer)row.get("id");
+			
 			Order order = orders.get(oid);
 			if (order == null) {
 				order = new Order();
 				order.setOrderId(oid);
-				LocalDateTime odate = (LocalDateTime) row.get("odate");
+				LocalDateTime odate = (LocalDateTime)row.get("odate");
 				order.setOrderDate(odate.toString());
-
+				
 				orders.put(oid, order);
 			}
-
+			
 			OrderDetail detail = new OrderDetail();
 			detail.setOrderId(oid);
-			detail.setUnitPrice(((BigDecimal) row.get("price")).doubleValue());
-			detail.setProductName((String) row.get("pname"));
-			detail.setQty((Integer) row.get("qty"));
-
+			detail.setUnitPrice(((BigDecimal)row.get("price")).doubleValue());
+			detail.setProductName((String)row.get("pname"));
+			detail.setQty((Integer)row.get("qty"));
+			
 			order.getOrderDetails().add(detail);
 		}
-
+		
+		
+		
 		return new ArrayList<Order>(orders.values());
 	}
-
+	
+	
+	
+	
 }

@@ -10,20 +10,19 @@ import org.springframework.stereotype.Component;
 import com.example.demo.model.OrderDetail;
 
 @Component
-public class OrderDetailRowMapper implements RowMapper<OrderDetail> {
-
-//	@Autowired
-//	private OrderDetail orderDetail;
+public class OrderDetailRowMapper 
+	implements RowMapper<OrderDetail> {
 
 	@Override
-	public OrderDetail mapRow(ResultSet rs, int rowNum) throws SQLException {
+	public OrderDetail mapRow(ResultSet rs, int rowNum) 
+			throws SQLException {
 		OrderDetail orderDetail = new OrderDetail();
+		
 		orderDetail.setOrderId(rs.getInt("id"));
 		orderDetail.setProductName(rs.getString("pname"));
 		orderDetail.setQty(rs.getInt("qty"));
-		orderDetail.setUnitPrice(rs.getDouble("price"));
-		;
-
+		orderDetail.setUnitPrice(rs.getDouble("price"));;
+		
 		return orderDetail;
 	}
 
